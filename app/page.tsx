@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 const CHAMPIONS = [
@@ -70,6 +70,15 @@ interface Recommendation {
   reason: string;
 }
 
+const LOADING_MESSAGES = [
+  "Analyzing your team composition...",
+  "Scouting the enemy picks...",
+  "Consulting the Rift...",
+  "Calculating synergies...",
+  "Checking win conditions...",
+  "Almost there...",
+];
+
 const StatBar = ({ label, value }: { label: string; value: number }) => {
   const color =
     value >= 4 ? "bg-green-400" :
@@ -85,6 +94,28 @@ const StatBar = ({ label, value }: { label: string; value: number }) => {
         />
       </div>
       <span className="text-xs text-gray-400 w-4">{value}/5</span>
+    </div>
+  );
+};
+
+const LoadingOverlay = () => {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex(prev => (prev + 1) % LOADING_MESSAGES.length);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-2xl p-10 flex flex-col items-center gap-6 shadow-2xl">
+        <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-300 text-sm text-center max-w-xs transition-all duration-500">
+          {LOADING_MESSAGES[msgIndex]}
+        </p>
+      </div>
     </div>
   );
 };
@@ -181,6 +212,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-8">
+      {loading && <LoadingOverlay />}
+
       <div className="flex items-baseline gap-1 mb-2">
         <h1 className="text-4xl font-bold text-white">Synergy</h1>
         <span className="text-4xl font-bold text-yellow-400">.GG</span>
@@ -221,7 +254,7 @@ export default function Home() {
           disabled={loading}
           className="w-full bg-yellow-400 text-gray-950 font-bold py-3 rounded-xl hover:bg-yellow-300 transition disabled:opacity-50"
         >
-          {loading ? "Analyzing comp..." : "Analyze & Recommend →"}
+          Analyze & Recommend →
         </button>
       </div>
 
