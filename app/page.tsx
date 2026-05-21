@@ -45,6 +45,7 @@ interface Recommendation {
 export default function Home() {
   const [picks, setPicks] = useState<Picks>({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
   const [enemies, setEnemies] = useState<Picks>({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
+  const [myRole, setMyRole] = useState<Role | null>(null);
   const [activeSlot, setActiveSlot] = useState<{ team: "ally" | "enemy"; role: Role } | null>(null);
   const [search, setSearch] = useState("");
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
@@ -75,13 +76,14 @@ export default function Home() {
   const getRecommendations = async () => {
     const filledCount = Object.values(picks).filter(p => p !== "").length;
     if (filledCount === 0) return alert("Please select at least one ally champion first!");
+    if (!myRole) return alert("Please select your role first!");
     setLoading(true);
     setRecommendations(null);
     try {
       const res = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ picks, enemies }),
+        body: JSON.stringify({ picks, enemies, myRole }),
       });
       const data = await res.json();
       setRecommendations(data.recommendations);
@@ -133,6 +135,24 @@ export default function Home() {
 
       <div className="bg-gray-900 rounded-2xl p-8 w-full max-w-2xl shadow-xl">
 
+        {/* Role Selector */}
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Role</h2>
+        <div className="grid grid-cols-5 gap-2 mb-8">
+          {ROLES.map(role => (
+            <button
+              key={role}
+              onClick={() => setMyRole(role)}
+              className={`py-2 rounded-xl text-sm font-semibold transition border-2
+                ${myRole === role
+                  ? "bg-yellow-400 text-gray-950 border-yellow-400"
+                  : "bg-gray-800 text-gray-400 border-gray-700 hover:border-yellow-400"
+                }`}
+            >
+              {role}
+            </button>
+          ))}
+        </div>
+
         <h2 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3">Your Team</h2>
         <div className="grid grid-cols-5 gap-3 mb-6">
           {ROLES.map(role => renderSlot("ally", role))}
@@ -154,7 +174,9 @@ export default function Home() {
 
       {recommendations && (
         <div className="mt-8 w-full max-w-2xl">
-          <h2 className="text-xl font-semibold mb-4">Recommended Picks</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Recommended {myRole} Picks
+          </h2>
           <div className="grid grid-cols-1 gap-4">
             {recommendations.map((rec, i) => (
               <div key={i} className="bg-gray-900 rounded-2xl p-6 shadow-xl flex items-center gap-4">

@@ -5,7 +5,7 @@ const client = new Anthropic({
 });
 
 export async function POST(request) {
-  const { picks, enemies } = await request.json();
+  const { picks, enemies, myRole } = await request.json();
 
   const filledPicks = Object.entries(picks)
     .filter(([_, champ]) => champ !== "")
@@ -25,22 +25,23 @@ export async function POST(request) {
         role: "user",
         content: `You are a League of Legends expert assistant for a tool called Synergy.GG.
 
-Ally team picks: ${filledPicks}
+The player is filling the ${myRole} role.
+Ally team picks: ${filledPicks || "None yet"}
 ${enemyPicks ? `Enemy team picks: ${enemyPicks}` : "No enemy picks provided."}
 
-Based on this information, recommend exactly 3 champions the player could pick to best synergize with allies AND counter the enemy team.
+Recommend exactly 3 champions for the ${myRole} role that synergize with the ally team and counter the enemy team.
 
 For each recommendation provide:
 1. Champion name
-2. Recommended role
-3. A 1-2 sentence explanation covering both synergy and counter aspects
+2. Role (should be ${myRole})
+3. A 1-2 sentence explanation covering synergy and counter aspects
 
 Format your response as JSON like this:
 {
   "recommendations": [
     {
       "champion": "Champion Name",
-      "role": "Role",
+      "role": "${myRole}",
       "reason": "Explanation here"
     }
   ]
