@@ -24,13 +24,22 @@ const CHAMPIONS = [
   "Zoe","Zyra"
 ];
 
-const ROLES = ["Top", "Jungle", "Mid", "Bot", "Support"];
+type Role = "Top" | "Jungle" | "Mid" | "Bot" | "Support";
+const ROLES: Role[] = ["Top", "Jungle", "Mid", "Bot", "Support"];
+
+type Picks = Record<Role, string>;
+
+interface Recommendation {
+  champion: string;
+  role: string;
+  reason: string;
+}
 
 export default function Home() {
-  const [picks, setPicks] = useState({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
-  const [activeSlot, setActiveSlot] = useState(null);
+  const [picks, setPicks] = useState<Picks>({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
+  const [activeSlot, setActiveSlot] = useState<Role | null>(null);
   const [search, setSearch] = useState("");
-  const [recommendations, setRecommendations] = useState(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const filtered = CHAMPIONS.filter(c =>
@@ -38,12 +47,13 @@ export default function Home() {
   );
 
   const selectChampion = (champ: string) => {
+    if (!activeSlot) return;
     setPicks(prev => ({ ...prev, [activeSlot]: champ }));
     setActiveSlot(null);
     setSearch("");
   };
 
-  const clearSlot = (e, role) => {
+  const clearSlot = (e: React.MouseEvent, role: Role) => {
     e.stopPropagation();
     setPicks(prev => ({ ...prev, [role]: "" }));
     setRecommendations(null);
@@ -62,7 +72,7 @@ export default function Home() {
       });
       const data = await res.json();
       setRecommendations(data.recommendations);
-    } catch (err) {
+    } catch {
       alert("Something went wrong. Please try again.");
     }
     setLoading(false);
@@ -77,7 +87,7 @@ export default function Home() {
       <p className="text-gray-400 mb-12">Find the perfect pick for your team comp</p>
 
       <div className="bg-gray-900 rounded-2xl p-8 w-full max-w-2xl shadow-xl">
-        <h2 className="text-xl font-semibold mb-6">Your Team's Current Picks</h2>
+        <h2 className="text-xl font-semibold mb-6">Your Team&apos;s Current Picks</h2>
 
         <div className="grid grid-cols-5 gap-3 mb-8">
           {ROLES.map((role) => (
