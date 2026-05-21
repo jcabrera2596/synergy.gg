@@ -56,7 +56,7 @@ const CHAMPION_KEY_OVERRIDES: Record<string, string> = {
 const toImageKey = (name: string) =>
   CHAMPION_KEY_OVERRIDES[name] ?? name.replace(/\s+/g, "").replace(/'/g, "").replace(/\./g, "").replace("&", "and");
 
-const PATCH = "14.10.1";
+const PATCH = "14.22.1";
 const champImg = (name: string) =>
   `https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/champion/${toImageKey(name)}.png`;
 
