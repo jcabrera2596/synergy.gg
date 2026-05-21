@@ -37,7 +37,7 @@ export default function Home() {
     c.toLowerCase().includes(search.toLowerCase())
   );
 
-  const selectChampion = (champ) => {
+  const selectChampion = (champ: string) => {
     setPicks(prev => ({ ...prev, [activeSlot]: champ }));
     setActiveSlot(null);
     setSearch("");
