@@ -25,8 +25,27 @@ const CHAMPIONS = [
   "Zoe","Zyra"
 ];
 
+const CHAMPION_KEY_OVERRIDES: Record<string, string> = {
+  "Kai'Sa": "Kaisa",
+  "Kha'Zix": "Khazix",
+  "Rek'Sai": "RekSai",
+  "Vel'Koz": "Velkoz",
+  "Cho'Gath": "Chogath",
+  "Kog'Maw": "KogMaw",
+  "Dr. Mundo": "DrMundo",
+  "Aurelion Sol": "AurelionSol",
+  "Jarvan IV": "JarvanIV",
+  "Lee Sin": "LeeSin",
+  "Master Yi": "MasterYi",
+  "Miss Fortune": "MissFortune",
+  "Renata Glasc": "Renata",
+  "Tahm Kench": "TahmKench",
+  "Twisted Fate": "TwistedFate",
+  "Xin Zhao": "XinZhao",
+};
+
 const toImageKey = (name: string) =>
-  name.replace(/\s+/g, "").replace(/'/g, "").replace(/\./g, "").replace("&", "and");
+  CHAMPION_KEY_OVERRIDES[name] ?? name.replace(/\s+/g, "").replace(/'/g, "").replace(/\./g, "").replace("&", "and");
 
 const PATCH = "14.10.1";
 const champImg = (name: string) =>
