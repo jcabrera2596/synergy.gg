@@ -5,9 +5,14 @@ const client = new Anthropic({
 });
 
 export async function POST(request) {
-  const { picks } = await request.json();
+  const { picks, enemies } = await request.json();
 
   const filledPicks = Object.entries(picks)
+    .filter(([_, champ]) => champ !== "")
+    .map(([role, champ]) => `${role}: ${champ}`)
+    .join(", ");
+
+  const enemyPicks = Object.entries(enemies)
     .filter(([_, champ]) => champ !== "")
     .map(([role, champ]) => `${role}: ${champ}`)
     .join(", ");
@@ -19,15 +24,16 @@ export async function POST(request) {
       {
         role: "user",
         content: `You are a League of Legends expert assistant for a tool called Synergy.GG.
-        
-A player's team currently has these champions picked: ${filledPicks}
 
-Based on this team composition, recommend exactly 3 champions the player could pick to best synergize with the team. 
+Ally team picks: ${filledPicks}
+${enemyPicks ? `Enemy team picks: ${enemyPicks}` : "No enemy picks provided."}
+
+Based on this information, recommend exactly 3 champions the player could pick to best synergize with allies AND counter the enemy team.
 
 For each recommendation provide:
 1. Champion name
 2. Recommended role
-3. A 1-2 sentence explanation of why they synergize well
+3. A 1-2 sentence explanation covering both synergy and counter aspects
 
 Format your response as JSON like this:
 {
@@ -46,6 +52,6 @@ Return only the JSON, no other text.`
   });
 
   const text = message.content[0].text.replace(/```json\n?|\n?```/g, "").trim();
-const response = JSON.parse(text);
+  const response = JSON.parse(text);
   return Response.json(response);
 }

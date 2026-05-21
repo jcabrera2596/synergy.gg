@@ -26,11 +26,7 @@ const CHAMPIONS = [
 ];
 
 const toImageKey = (name: string) =>
-  name
-    .replace(/\s+/g, "")
-    .replace(/'/g, "")
-    .replace(/\./g, "")
-    .replace("&", "and");
+  name.replace(/\s+/g, "").replace(/'/g, "").replace(/\./g, "").replace("&", "and");
 
 const PATCH = "14.10.1";
 const champImg = (name: string) =>
@@ -48,7 +44,8 @@ interface Recommendation {
 
 export default function Home() {
   const [picks, setPicks] = useState<Picks>({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
-  const [activeSlot, setActiveSlot] = useState<Role | null>(null);
+  const [enemies, setEnemies] = useState<Picks>({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
+  const [activeSlot, setActiveSlot] = useState<{ team: "ally" | "enemy"; role: Role } | null>(null);
   const [search, setSearch] = useState("");
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,27 +56,32 @@ export default function Home() {
 
   const selectChampion = (champ: string) => {
     if (!activeSlot) return;
-    setPicks(prev => ({ ...prev, [activeSlot]: champ }));
+    if (activeSlot.team === "ally") {
+      setPicks(prev => ({ ...prev, [activeSlot.role]: champ }));
+    } else {
+      setEnemies(prev => ({ ...prev, [activeSlot.role]: champ }));
+    }
     setActiveSlot(null);
     setSearch("");
   };
 
-  const clearSlot = (e: React.MouseEvent, role: Role) => {
+  const clearSlot = (e: React.MouseEvent, team: "ally" | "enemy", role: Role) => {
     e.stopPropagation();
-    setPicks(prev => ({ ...prev, [role]: "" }));
+    if (team === "ally") setPicks(prev => ({ ...prev, [role]: "" }));
+    else setEnemies(prev => ({ ...prev, [role]: "" }));
     setRecommendations(null);
   };
 
   const getRecommendations = async () => {
     const filledCount = Object.values(picks).filter(p => p !== "").length;
-    if (filledCount === 0) return alert("Please select at least one champion first!");
+    if (filledCount === 0) return alert("Please select at least one ally champion first!");
     setLoading(true);
     setRecommendations(null);
     try {
       const res = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ picks }),
+        body: JSON.stringify({ picks, enemies }),
       });
       const data = await res.json();
       setRecommendations(data.recommendations);
@@ -87,6 +89,38 @@ export default function Home() {
       alert("Something went wrong. Please try again.");
     }
     setLoading(false);
+  };
+
+  const renderSlot = (team: "ally" | "enemy", role: Role) => {
+    const champ = team === "ally" ? picks[role] : enemies[role];
+    const isAlly = team === "ally";
+    return (
+      <div key={role} className="flex flex-col items-center gap-2">
+        <div
+          onClick={() => { setActiveSlot({ team, role }); setSearch(""); }}
+          className={`relative w-16 h-16 rounded-xl border-2 cursor-pointer transition overflow-hidden
+            ${champ
+              ? isAlly ? "border-yellow-400" : "border-red-500"
+              : isAlly ? "border-gray-700 bg-gray-800 hover:border-yellow-400" : "border-gray-700 bg-gray-800 hover:border-red-500"
+            }`}
+        >
+          {champ ? (
+            <>
+              <Image src={champImg(champ)} alt={champ} fill className="object-cover" unoptimized />
+              <span
+                onClick={(e) => clearSlot(e, team, role)}
+                className="absolute -top-1 -right-1 bg-gray-700 hover:bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs transition z-10"
+              >
+                ✕
+              </span>
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">Empty</div>
+          )}
+        </div>
+        <span className="text-xs text-gray-400">{role}</span>
+      </div>
+    );
   };
 
   return (
@@ -98,44 +132,15 @@ export default function Home() {
       <p className="text-gray-400 mb-12">Find the perfect pick for your team comp</p>
 
       <div className="bg-gray-900 rounded-2xl p-8 w-full max-w-2xl shadow-xl">
-        <h2 className="text-xl font-semibold mb-6">Your Team&apos;s Current Picks</h2>
 
+        <h2 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3">Your Team</h2>
+        <div className="grid grid-cols-5 gap-3 mb-6">
+          {ROLES.map(role => renderSlot("ally", role))}
+        </div>
+
+        <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3">Enemy Team</h2>
         <div className="grid grid-cols-5 gap-3 mb-8">
-          {ROLES.map((role) => (
-            <div key={role} className="flex flex-col items-center gap-2">
-              <div
-                onClick={() => { setActiveSlot(role); setSearch(""); }}
-                className={`relative w-16 h-16 rounded-xl border-2 cursor-pointer transition overflow-hidden
-                  ${picks[role]
-                    ? "border-yellow-400"
-                    : "border-gray-700 bg-gray-800 hover:border-yellow-400"
-                  }`}
-              >
-                {picks[role] ? (
-                  <>
-                    <Image
-                      src={champImg(picks[role])}
-                      alt={picks[role]}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                    <span
-                      onClick={(e) => clearSlot(e, role)}
-                      className="absolute -top-1 -right-1 bg-gray-700 hover:bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs transition z-10"
-                    >
-                      ✕
-                    </span>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
-                    Empty
-                  </div>
-                )}
-              </div>
-              <span className="text-xs text-gray-400">{role}</span>
-            </div>
-          ))}
+          {ROLES.map(role => renderSlot("enemy", role))}
         </div>
 
         <button
@@ -154,13 +159,7 @@ export default function Home() {
             {recommendations.map((rec, i) => (
               <div key={i} className="bg-gray-900 rounded-2xl p-6 shadow-xl flex items-center gap-4">
                 <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 border-yellow-400">
-                  <Image
-                    src={champImg(rec.champion)}
-                    alt={rec.champion}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
+                  <Image src={champImg(rec.champion)} alt={rec.champion} fill className="object-cover" unoptimized />
                 </div>
                 <div>
                   <div className="flex items-center gap-3 mb-1">
@@ -178,7 +177,9 @@ export default function Home() {
       {activeSlot && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4">Pick for {activeSlot}</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              Pick for {activeSlot.team === "ally" ? "Your Team" : "Enemy Team"} — {activeSlot.role}
+            </h3>
             <input
               autoFocus
               type="text"
@@ -195,13 +196,7 @@ export default function Home() {
                   className="bg-gray-800 hover:bg-yellow-400 hover:text-gray-950 text-sm py-2 px-2 rounded-lg transition flex items-center gap-2"
                 >
                   <div className="relative w-6 h-6 rounded overflow-hidden flex-shrink-0">
-                    <Image
-                      src={champImg(champ)}
-                      alt={champ}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
+                    <Image src={champImg(champ)} alt={champ} fill className="object-cover" unoptimized />
                   </div>
                   <span className="truncate">{champ}</span>
                 </button>
