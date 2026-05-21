@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({
-  apiKey: "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",
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(request) {
