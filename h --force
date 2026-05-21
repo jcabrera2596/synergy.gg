@@ -1,0 +1,12 @@
+[33m1d01740[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m use env var for api key
+[33m386f809[m add champion names and role labels to slots
+[33mee330aa[m[33m ([m[1;31morigin/main[m[33m)[m fix champion icon names
+[33me264163[m add role selector
+[33m52b63df[m add enemy team picks
+[33m3e31113[m add champion icons
+[33m3c15ecc[m final redeploy
+[33m3d6897b[m force redeploy with env var
+[33me358de0[m fix all typescript errors
+[33m6d7d7c4[m trigger redeploy
+[33m69889c2[m fix typescript error
+[33m1bf4f6f[m first commit
