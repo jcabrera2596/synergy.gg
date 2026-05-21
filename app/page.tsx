@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 
 const CHAMPIONS = [
   "Aatrox","Ahri","Akali","Akshan","Alistar","Amumu","Anivia","Annie","Aphelios",
@@ -24,9 +25,19 @@ const CHAMPIONS = [
   "Zoe","Zyra"
 ];
 
+const toImageKey = (name: string) =>
+  name
+    .replace(/\s+/g, "")
+    .replace(/'/g, "")
+    .replace(/\./g, "")
+    .replace("&", "and");
+
+const PATCH = "14.10.1";
+const champImg = (name: string) =>
+  `https://ddragon.leagueoflegends.com/cdn/${PATCH}/img/champion/${toImageKey(name)}.png`;
+
 type Role = "Top" | "Jungle" | "Mid" | "Bot" | "Support";
 const ROLES: Role[] = ["Top", "Jungle", "Mid", "Bot", "Support"];
-
 type Picks = Record<Role, string>;
 
 interface Recommendation {
@@ -94,23 +105,33 @@ export default function Home() {
             <div key={role} className="flex flex-col items-center gap-2">
               <div
                 onClick={() => { setActiveSlot(role); setSearch(""); }}
-                className={`relative w-16 h-16 rounded-xl border-2 flex items-center justify-center text-xs cursor-pointer transition text-center px-1
+                className={`relative w-16 h-16 rounded-xl border-2 cursor-pointer transition overflow-hidden
                   ${picks[role]
-                    ? "border-yellow-400 bg-yellow-400/10 text-yellow-300 font-semibold"
-                    : "border-gray-700 bg-gray-800 text-gray-500 hover:border-yellow-400"
+                    ? "border-yellow-400"
+                    : "border-gray-700 bg-gray-800 hover:border-yellow-400"
                   }`}
               >
                 {picks[role] ? (
                   <>
-                    <span>{picks[role]}</span>
+                    <Image
+                      src={champImg(picks[role])}
+                      alt={picks[role]}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                     <span
                       onClick={(e) => clearSlot(e, role)}
-                      className="absolute -top-1 -right-1 bg-gray-700 hover:bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs transition"
+                      className="absolute -top-1 -right-1 bg-gray-700 hover:bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs transition z-10"
                     >
                       ✕
                     </span>
                   </>
-                ) : "Empty"}
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                    Empty
+                  </div>
+                )}
               </div>
               <span className="text-xs text-gray-400">{role}</span>
             </div>
@@ -131,12 +152,23 @@ export default function Home() {
           <h2 className="text-xl font-semibold mb-4">Recommended Picks</h2>
           <div className="grid grid-cols-1 gap-4">
             {recommendations.map((rec, i) => (
-              <div key={i} className="bg-gray-900 rounded-2xl p-6 shadow-xl">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-yellow-400 font-bold text-lg">{rec.champion}</span>
-                  <span className="text-gray-400 text-sm bg-gray-800 px-2 py-1 rounded-lg">{rec.role}</span>
+              <div key={i} className="bg-gray-900 rounded-2xl p-6 shadow-xl flex items-center gap-4">
+                <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 border-yellow-400">
+                  <Image
+                    src={champImg(rec.champion)}
+                    alt={rec.champion}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
                 </div>
-                <p className="text-gray-300 text-sm">{rec.reason}</p>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-yellow-400 font-bold text-lg">{rec.champion}</span>
+                    <span className="text-gray-400 text-sm bg-gray-800 px-2 py-1 rounded-lg">{rec.role}</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">{rec.reason}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -160,9 +192,18 @@ export default function Home() {
                 <button
                   key={champ}
                   onClick={() => selectChampion(champ)}
-                  className="bg-gray-800 hover:bg-yellow-400 hover:text-gray-950 text-sm py-2 px-2 rounded-lg transition text-left"
+                  className="bg-gray-800 hover:bg-yellow-400 hover:text-gray-950 text-sm py-2 px-2 rounded-lg transition flex items-center gap-2"
                 >
-                  {champ}
+                  <div className="relative w-6 h-6 rounded overflow-hidden flex-shrink-0">
+                    <Image
+                      src={champImg(champ)}
+                      alt={champ}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <span className="truncate">{champ}</span>
                 </button>
               ))}
             </div>
