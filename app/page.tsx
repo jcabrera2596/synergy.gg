@@ -55,11 +55,39 @@ type Role = "Top" | "Jungle" | "Mid" | "Bot" | "Support";
 const ROLES: Role[] = ["Top", "Jungle", "Mid", "Bot", "Support"];
 type Picks = Record<Role, string>;
 
+interface Analysis {
+  engage: number;
+  damage: number;
+  peel: number;
+  scaling: number;
+  crowdControl: number;
+  winCondition: string;
+}
+
 interface Recommendation {
   champion: string;
   role: string;
   reason: string;
 }
+
+const StatBar = ({ label, value }: { label: string; value: number }) => {
+  const color =
+    value >= 4 ? "bg-green-400" :
+    value >= 3 ? "bg-yellow-400" :
+    "bg-red-400";
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-gray-400 text-xs w-24 flex-shrink-0">{label}</span>
+      <div className="flex-1 bg-gray-800 rounded-full h-2">
+        <div
+          className={`${color} h-2 rounded-full transition-all duration-500`}
+          style={{ width: `${(value / 5) * 100}%` }}
+        />
+      </div>
+      <span className="text-xs text-gray-400 w-4">{value}/5</span>
+    </div>
+  );
+};
 
 export default function Home() {
   const [picks, setPicks] = useState<Picks>({ Top: "", Jungle: "", Mid: "", Bot: "", Support: "" });
@@ -67,6 +95,7 @@ export default function Home() {
   const [myRole, setMyRole] = useState<Role | null>(null);
   const [activeSlot, setActiveSlot] = useState<{ team: "ally" | "enemy"; role: Role } | null>(null);
   const [search, setSearch] = useState("");
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -89,6 +118,7 @@ export default function Home() {
     e.stopPropagation();
     if (team === "ally") setPicks(prev => ({ ...prev, [role]: "" }));
     else setEnemies(prev => ({ ...prev, [role]: "" }));
+    setAnalysis(null);
     setRecommendations(null);
   };
 
@@ -97,6 +127,7 @@ export default function Home() {
     if (filledCount === 0) return alert("Please select at least one ally champion first!");
     if (!myRole) return alert("Please select your role first!");
     setLoading(true);
+    setAnalysis(null);
     setRecommendations(null);
     try {
       const res = await fetch("/api/recommend", {
@@ -105,6 +136,7 @@ export default function Home() {
         body: JSON.stringify({ picks, enemies, myRole }),
       });
       const data = await res.json();
+      setAnalysis(data.analysis);
       setRecommendations(data.recommendations);
     } catch {
       alert("Something went wrong. Please try again.");
@@ -116,7 +148,8 @@ export default function Home() {
     const champ = team === "ally" ? picks[role] : enemies[role];
     const isAlly = team === "ally";
     return (
-      <div key={role} className="flex flex-col items-center gap-2">
+      <div key={role} className="flex flex-col items-center gap-1">
+        <span className="text-xs text-gray-500">{role}</span>
         <div
           onClick={() => { setActiveSlot({ team, role }); setSearch(""); }}
           className={`relative w-16 h-16 rounded-xl border-2 cursor-pointer transition overflow-hidden
@@ -139,7 +172,9 @@ export default function Home() {
             <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">Empty</div>
           )}
         </div>
-        <span className="text-xs text-gray-400">{role}</span>
+        <span className="text-xs text-center leading-tight w-16 truncate text-yellow-300">
+          {champ ? champ : ""}
+        </span>
       </div>
     );
   };
@@ -154,7 +189,6 @@ export default function Home() {
 
       <div className="bg-gray-900 rounded-2xl p-8 w-full max-w-2xl shadow-xl">
 
-        {/* Role Selector */}
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Role</h2>
         <div className="grid grid-cols-5 gap-2 mb-8">
           {ROLES.map(role => (
@@ -187,15 +221,30 @@ export default function Home() {
           disabled={loading}
           className="w-full bg-yellow-400 text-gray-950 font-bold py-3 rounded-xl hover:bg-yellow-300 transition disabled:opacity-50"
         >
-          {loading ? "Analyzing comp..." : "Recommend My Pick →"}
+          {loading ? "Analyzing comp..." : "Analyze & Recommend →"}
         </button>
       </div>
 
+      {analysis && (
+        <div className="mt-8 w-full max-w-2xl bg-gray-900 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-xl font-semibold mb-4">Comp Analysis</h2>
+          <div className="flex flex-col gap-3 mb-4">
+            <StatBar label="Engage" value={analysis.engage} />
+            <StatBar label="Damage" value={analysis.damage} />
+            <StatBar label="Peel" value={analysis.peel} />
+            <StatBar label="Scaling" value={analysis.scaling} />
+            <StatBar label="Crowd Control" value={analysis.crowdControl} />
+          </div>
+          <div className="bg-gray-800 rounded-xl p-4">
+            <span className="text-xs text-gray-400 uppercase tracking-wider">Win Condition</span>
+            <p className="text-white text-sm mt-1">{analysis.winCondition}</p>
+          </div>
+        </div>
+      )}
+
       {recommendations && (
-        <div className="mt-8 w-full max-w-2xl">
-          <h2 className="text-xl font-semibold mb-4">
-            Recommended {myRole} Picks
-          </h2>
+        <div className="mt-6 w-full max-w-2xl">
+          <h2 className="text-xl font-semibold mb-4">Recommended {myRole} Picks</h2>
           <div className="grid grid-cols-1 gap-4">
             {recommendations.map((rec, i) => (
               <div key={i} className="bg-gray-900 rounded-2xl p-6 shadow-xl flex items-center gap-4">

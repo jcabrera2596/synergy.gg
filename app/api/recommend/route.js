@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: "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",
 });
 
 export async function POST(request) {
@@ -29,15 +29,21 @@ The player is filling the ${myRole} role.
 Ally team picks: ${filledPicks || "None yet"}
 ${enemyPicks ? `Enemy team picks: ${enemyPicks}` : "No enemy picks provided."}
 
-Recommend exactly 3 champions for the ${myRole} role that synergize with the ally team and counter the enemy team.
+Provide:
+1. A comp analysis of the ally team with scores from 1-5 for: engage, damage, peel, scaling, crowdControl
+2. A one sentence win condition for the ally team
+3. Exactly 3 champion recommendations for the ${myRole} role that synergize with allies and counter enemies
 
-For each recommendation provide:
-1. Champion name
-2. Role (should be ${myRole})
-3. A 1-2 sentence explanation covering synergy and counter aspects
-
-Format your response as JSON like this:
+Format your response as JSON exactly like this:
 {
+  "analysis": {
+    "engage": 3,
+    "damage": 4,
+    "peel": 2,
+    "scaling": 3,
+    "crowdControl": 4,
+    "winCondition": "One sentence describing how this team wins"
+  },
   "recommendations": [
     {
       "champion": "Champion Name",
